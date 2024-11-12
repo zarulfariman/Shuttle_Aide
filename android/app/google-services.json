@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "537966992545",
+    "firebase_url": "https://shuttleaide-testing-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "shuttleaide-testing",
+    "storage_bucket": "shuttleaide-testing.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:537966992545:android:586c0991517fb9b35fa4e0",
+        "android_client_info": {
+          "package_name": "com.example.shuttle_aide_1"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAUT0TEiqZ1GwNx2vjDCqUwKc2kJ6CzdGU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
