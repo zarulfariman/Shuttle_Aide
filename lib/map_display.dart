@@ -1,4 +1,4 @@
-import 'dart:js_util';
+//import 'dart:js_util';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -23,8 +23,7 @@ class MapDisplay extends StatefulWidget {
 }
 
 class _MapDisplayState extends State<MapDisplay> with TickerProviderStateMixin {
-
-  final double _currentZoom = 17.0; // Default zoom level
+  
   bool _followBus = false; // Bool variable when bus is pressed.
 
   //Testing Database fetching
@@ -70,7 +69,8 @@ class _MapDisplayState extends State<MapDisplay> with TickerProviderStateMixin {
         if (_currentIndex >= busRoute.length) _currentIndex = 0;
         _currentPosition = _nextPosition;
         _nextPosition = busRoute[_currentIndex];
-
+        
+      
         if (_followBus) {
           //mapController.move(_currentPosition, _currentZoom); // Move the map to follow the bus
           animatedMapController.centerOnPoint(
@@ -78,19 +78,10 @@ class _MapDisplayState extends State<MapDisplay> with TickerProviderStateMixin {
             curve: Curves.fastEaseInToSlowEaseOut,
             duration: const Duration(seconds: 3)
           );
-        }
+        } 
       });
 
     });
-
-    TweenAnimationBuilder<LatLng>(
-      tween: LatLngTween(begin: _currentPosition, end: _nextPosition),
-      duration: const Duration(seconds: 3),
-      builder: (context, position, child) {
-        mapController.move(position, _currentZoom);
-        return const SizedBox(); // Empty widget; logic is in the mapController.move
-      },
-    );
 
     // Initialize the bus stop markers from busStopsData
     busStops = _createBusStopMarkers(busStopsData);
@@ -314,7 +305,7 @@ class _MapDisplayState extends State<MapDisplay> with TickerProviderStateMixin {
                 ),
                 popupDisplayOptions: PopupDisplayOptions(
                   builder: (BuildContext context, Marker marker) {
-                    return Align(
+                    return const Align(
 
                     );
                   },
