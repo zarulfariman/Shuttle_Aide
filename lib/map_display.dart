@@ -1,6 +1,7 @@
-//import 'dart:js_util';
+import 'package:permission_handler/permission_handler.dart';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
@@ -10,6 +11,7 @@ import '/pages/schedule.dart';
 
 import 'package:flutter_map_marker_popup/flutter_map_marker_popup.dart';
 import 'package:flutter_map_animations/flutter_map_animations.dart';
+import 'package:flutter_map_location_marker/flutter_map_location_marker.dart';
 import 'station_popup.dart';
 import 'data/bus_stop_data.dart';
 
@@ -24,7 +26,14 @@ class MapDisplay extends StatefulWidget {
 
 class _MapDisplayState extends State<MapDisplay> with TickerProviderStateMixin {
   
+  bool _hasLocationPermission = false; // Tracks whether the user granted location permission.
+
   bool _followBus = false; // Bool variable when bus is pressed.
+  bool _visible = false;
+  String panelContent = 'Bus Route Info'; // Default content of the sliding panel.
+
+  // Bus information (dummy values for now; replace with actual data)
+  String selectedBusInfo = "Bus ID: 001\nDriver: John Doe\nRoute: A to B";
 
   //Testing Database fetching
   DatabaseReference databaseReference = FirebaseDatabase.instance
@@ -55,33 +64,67 @@ class _MapDisplayState extends State<MapDisplay> with TickerProviderStateMixin {
   final MapController mapController = MapController();
   final PopupController busStopsPopupController = PopupController();
   final PopupController busPopupController = PopupController();
+  late final StreamController<double?> _alignPositionStreamController; // For aligning map to user's current position
   // Animated map controller
   late final animatedMapController = AnimatedMapController(
     vsync: this,
   );
+  //Animation controller
+  late AnimationController _heightAnimationController;
+  late Animation<double> _minHeightAnimation;
+
+  // Function to check and request location permissions
+  Future<void> _checkLocationPermission() async {
+    final status = await Permission.location.request();
+    if (status == PermissionStatus.granted) {
+      setState(() {
+        _hasLocationPermission = true; // Permission granted
+      });
+    } else {
+      setState(() {
+        _hasLocationPermission = false; // Permission denied
+      });
+    }
+  }
 
   @override
   void initState() {
     super.initState();
+    _checkLocationPermission(); // Check and request location permission on app start.
+    _alignPositionStreamController = StreamController<double?>();
     _timer = Timer.periodic(const Duration(seconds: 3), (timer) {
       setState(() {
         _currentIndex++;
         if (_currentIndex >= busRoute.length) _currentIndex = 0;
         _currentPosition = _nextPosition;
         _nextPosition = busRoute[_currentIndex];
-        
       
         if (_followBus) {
           //mapController.move(_currentPosition, _currentZoom); // Move the map to follow the bus
           animatedMapController.centerOnPoint(
             _currentPosition,
-            curve: Curves.fastEaseInToSlowEaseOut,
-            duration: const Duration(seconds: 3)
+            curve: Curves.easeInOut,
+            duration: const Duration(seconds: 2)
           );
         } 
       });
 
     });
+
+    // Initialize the animation controller
+    _heightAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+
+    // Set default animation for minHeight
+    _minHeightAnimation = Tween<double>(
+      begin: 0.1, // Default minHeight
+      end: 0.2, // Increased minHeight
+    ).animate(CurvedAnimation(
+      parent: _heightAnimationController,
+      curve: Curves.easeInOut,
+    ));
 
     // Initialize the bus stop markers from busStopsData
     busStops = _createBusStopMarkers(busStopsData);
@@ -109,12 +152,13 @@ class _MapDisplayState extends State<MapDisplay> with TickerProviderStateMixin {
   void dispose() {
     _timer.cancel();
     super.dispose();
+    _heightAnimationController.dispose();
   }
-
+  /*
   @override
   Widget build(BuildContext context) {
     return SlidingUpPanel(
-      minHeight: MediaQuery.of(context).size.height * 0.1,
+      minHeight: MediaQuery.of(context).size.height * _minHeightAnimation.value,
       borderRadius: const BorderRadius.vertical(top: Radius.circular(25)),
       parallaxEnabled: true,
       body: Stack(
@@ -123,7 +167,7 @@ class _MapDisplayState extends State<MapDisplay> with TickerProviderStateMixin {
           //Button to stop following bus (only appears when bus is pressed)
           if(_followBus)
             Positioned(
-              bottom: 100,
+              top: 400,
               right: 16,
               child: CircleAvatar(
                 radius: 30, // Adjust size
@@ -138,7 +182,9 @@ class _MapDisplayState extends State<MapDisplay> with TickerProviderStateMixin {
                   onPressed: () {
                     setState(() {
                       _followBus = false;
+                      panelContent = 'Bus Route Info'; // Reset to default content
                     });
+                    _heightAnimationController.reverse(); // Animate back to default minHeight
                   },
                 ),
               ),
@@ -178,6 +224,28 @@ class _MapDisplayState extends State<MapDisplay> with TickerProviderStateMixin {
               ),
             ),
           ),
+          Positioned(
+            top: 300,
+            right: 16,
+            child: CircleAvatar(
+              radius: 30, // Adjust size
+              backgroundColor: const Color.fromARGB(255, 20, 124, 27),
+              child: IconButton(
+                icon: Image.asset(
+                  'assets/rotateResetBW.png',
+                  fit: BoxFit.cover,
+                  width: 40,
+                  height: 40,
+                ),
+                onPressed: () {
+                  animatedMapController.animatedRotateReset(
+                    curve: Curves.easeIn,
+                    duration: const Duration(milliseconds: 700),
+                  );
+                },
+              ),
+            ),
+          ),
         ],
       ),
       panelBuilder: (controller) {
@@ -198,15 +266,142 @@ class _MapDisplayState extends State<MapDisplay> with TickerProviderStateMixin {
                   ),
                 ),
               ),
-              const Padding(
+              Padding(
                 padding: EdgeInsets.all(16.0),
                 child: Text(
-                  'Panel Content: Bus Route Info',
+                  //'Panel Content: Bus Route Info',
+                  _followBus ? selectedBusInfo : panelContent,
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
                 ),
               ),
             ],
           ),
+        );
+      },
+    );
+  }*/
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _heightAnimationController,
+      builder: (context, child) {
+        return SlidingUpPanel(
+          minHeight: MediaQuery.of(context).size.height * _minHeightAnimation.value,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(25)),
+          parallaxEnabled: true,
+          body: Stack(
+            children: [
+              _buildMap(),
+              //if (_followBus)
+              //Tap anywhere to stop following bus text (Tap-able)
+                AnimatedOpacity(
+                  opacity: _visible ? 1.0 : 0.0,
+                  duration: const Duration(milliseconds: 500),
+                  child: Stack(
+                    children: [
+                      Positioned(
+                        bottom: 250,
+                        left: 0,
+                        right: 0,
+                        child: GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _followBus = false;
+                              _visible = false;
+                            });
+                          },
+                          child: const Text(
+                            "Tap anywhere to stop following",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              shadows: [
+                                Shadow(
+                                  blurRadius: 8.0,
+                                  color: Color.fromARGB(255, 162, 168, 163),
+                                  offset: Offset(2.0, 2.0)
+                                )
+                              ]
+                            ),
+                          ),
+                        )
+                      ),
+                    ], 
+                  ),
+                ),
+              //Schedule button code
+              Positioned(
+                top: 100,
+                right: 16,
+                child: CircleAvatar(
+                  radius: 30,
+                  backgroundColor: const Color.fromARGB(255, 20, 124, 27),
+                  child: IconButton(
+                    icon: Image.asset(
+                      'assets/scheduleButtonBW.png',
+                      fit: BoxFit.cover,
+                      width: 40,
+                      height: 40,
+                    ),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const SchedulePage()),
+                      );
+                    },
+                  ),
+                ),
+              ),
+              //Conditional "center map to user's current position" button
+              if(_hasLocationPermission)
+                Positioned(
+                  top: 200, // Position the button at the bottom
+                  right: 16,   // Position the button to the right
+                  child: CircleAvatar(
+                    radius: 30, // Adjust size
+                    backgroundColor: const Color.fromARGB(255, 20, 124, 27),
+                    child: IconButton(
+                      icon: const Icon(Icons.my_location, color: Colors.white), // My location icon
+                      onPressed: () {
+                        _alignPositionStreamController.add(null);
+                        animatedMapController.animatedRotateReset(
+                          curve: Curves.easeInOut,
+                          duration: const Duration(milliseconds: 500),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          panelBuilder: (controller) {
+            return SingleChildScrollView(
+              controller: controller,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      margin: const EdgeInsets.only(top: 15),
+                      height: 6,
+                      width: 80,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(10),
+                        color: Colors.grey.shade300,
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Text(
+                      _followBus ? selectedBusInfo : panelContent,
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
         );
       },
     );
@@ -219,17 +414,21 @@ class _MapDisplayState extends State<MapDisplay> with TickerProviderStateMixin {
       options: MapOptions(
         initialCenter: const LatLng(3.2525, 101.7345),
         initialZoom: 17.00,
-        //onTap: (_, __) => popupController.hideAllPopups(), // Hide popups on map tap
         onTap: (_, __) {
-          // Dismiss the popup immediately when tapping anywhere on the map
           if (_followBus) {
             setState(() {
-              _followBus = false;
+              _followBus = false; // Dismiss the popup immediately when tapping anywhere on the map
+              //_visible = !_visible;
+              _visible = false;
+              panelContent = 'Bus Route Info'; // Reset to default content
             });
+            _heightAnimationController.reverse(); // Animate back to default minHeight
           }
           busStopsPopupController.hideAllPopups();
           busPopupController.hideAllPopups();
-          //_followBus = false; // Disable follow mode
+        },
+        onPositionChanged: (MapCamera camera, bool hasGesture) {
+          animatedMapController.cancelPreviousAnimations;
         },
       ),
       children: [
@@ -237,6 +436,23 @@ class _MapDisplayState extends State<MapDisplay> with TickerProviderStateMixin {
           urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
           userAgentPackageName: 'com.example.app',
         ),
+        // Conditionally display the CurrentLocationLayer
+        if (_hasLocationPermission)
+          CurrentLocationLayer(
+            alignPositionStream: _alignPositionStreamController.stream,
+            alignPositionAnimationCurve: Curves.easeInOut,
+            alignPositionAnimationDuration: const Duration(milliseconds: 500),
+            style: LocationMarkerStyle(
+              marker: const Icon(
+                Icons.circle_rounded,
+                color: Colors.blue,
+                size: 30,
+              ),
+              accuracyCircleColor: Colors.blue.withOpacity(0.1),
+              headingSectorColor: Colors.blue.withOpacity(0.8),
+              headingSectorRadius: 120,
+            ),
+          ),
         /* Old code for reference
         TweenAnimationBuilder<LatLng>(
           tween: LatLngTween(begin: _currentPosition, end: _nextPosition),
@@ -282,25 +498,45 @@ class _MapDisplayState extends State<MapDisplay> with TickerProviderStateMixin {
                     width: 30,
                     height: 30,
                     //child: const Icon(Icons.directions_bus, color: Colors.red),
-                    child: Icon(
+                    /*child: Icon(
                       Icons.directions_bus,
                       color: _followBus ? Colors.blue : Colors.red,
+                    ),
+                    child: CircleAvatar(
+                      backgroundColor: _followBus ?const Color.fromARGB(255, 49, 168, 75) : const Color.fromARGB(255, 146, 209, 160),
+                      child: const Icon(
+                        Icons.directions_bus, 
+                        color: Color.fromARGB(255, 219, 9, 33)
+                      ),
+                    )*/
+                    child: Container(
+                      decoration: ShapeDecoration(
+                        color: _followBus ? Colors.blue.shade100 : Colors.grey.shade100, // Subtle light background
+                        shape: CircleBorder(
+                          eccentricity: 1.0,
+                          side: BorderSide(
+                            color: _followBus ? Colors.teal.shade400 : Colors.teal.shade200, // Calming green/teal for the border
+                            width: 2, // Slightly thicker for better visibility
+                          ),
+                        ),
+                      ),
+                      child: const Icon(
+                        Icons.directions_bus,
+                        color: Color.fromARGB(255, 0, 0, 139),
+                      ),
                     ),
                   ),
                 ],
                 popupController: busPopupController,
                 markerTapBehavior: MarkerTapBehavior.custom(
                   (popupSpec, popupState, popupController) {
-                    
-                    if (_followBus == false) {
-                      // Show the popup for the bus marker
-                      //popupController.togglePopup(popupSpec.marker);
-                    }
-                    
                     setState(() {
                       // Toggle follow mode when the bus marker is tapped
                       _followBus = true;
+                      _visible = true;
+                      panelContent = selectedBusInfo; // Update content with bus info
                     });
+                    _heightAnimationController.forward(); // Animate to higher minHeight
                   },
                 ),
                 popupDisplayOptions: PopupDisplayOptions(
