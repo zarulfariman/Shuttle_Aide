@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-
 class StationPopup extends StatefulWidget {
   final Marker marker;
   final String stopName;
@@ -10,9 +9,9 @@ class StationPopup extends StatefulWidget {
   final String description; // Description of the bus stop
 
   const StationPopup({
-    required this.marker, 
-    required this.stopName, 
-    required this.imagePath, 
+    required this.marker,
+    required this.stopName,
+    required this.imagePath,
     required this.description,
     Key? key
   }) : super(key: key);

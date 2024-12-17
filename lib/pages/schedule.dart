@@ -188,18 +188,18 @@ class SchedulePage extends StatefulWidget {
 
 class _SchedulePageState extends State<SchedulePage> {
   final CollectionReference schedulesCollection =
-      FirebaseFirestore.instance.collection('schedules');
+  FirebaseFirestore.instance.collection('schedules');
 
   Map<String, Map<String, Map<String, List<Map<String, dynamic>>>>> schedules =
-      {};
+  {};
   bool isLoading = true;
   String? errorMessage;
 
   final Map<String, String> routeDescriptions = {
     "Ruqayyah":
-        "Departs from Mahallah Ruqayyah to all Kulliyah and ends back to Mahallah Ruqayyah.",
+    "Departs from Mahallah Ruqayyah to all Kulliyah and ends back to Mahallah Ruqayyah.",
     "Salahuddin":
-        "Departs from Mahallah Salahuddin to all Kulliyah and ends back to Mahallah Salahuddin.",
+    "Departs from Mahallah Salahuddin to all Kulliyah and ends back to Mahallah Salahuddin.",
   };
 
   final Color customGreen = const Color.fromARGB(255, 20, 124, 27);
@@ -213,7 +213,7 @@ class _SchedulePageState extends State<SchedulePage> {
   Future<void> _fetchSchedules() async {
     try {
       Map<String, Map<String, Map<String, List<Map<String, dynamic>>>>>
-          fetchedSchedules = {};
+      fetchedSchedules = {};
 
       final QuerySnapshot routeSnapshot = await schedulesCollection.get();
 
@@ -279,109 +279,109 @@ class _SchedulePageState extends State<SchedulePage> {
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : errorMessage != null
-              ? Center(
-                  child: Text(
-                    errorMessage!,
-                    style: const TextStyle(color: Colors.red),
-                    textAlign: TextAlign.center,
-                  ),
-                )
-              : schedules.isEmpty
-                  ? const Center(child: Text('No schedules available'))
-                  : ListView(
-                      children: [
-                        const SizedBox(height: 10),
-                        Center(
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 20, vertical: 10),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(30),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.grey.withOpacity(0.2),
-                                  blurRadius: 5,
-                                  spreadRadius: 2,
-                                )
-                              ],
-                            ),
-                            child: const Text(
-                              "Schedules",
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 15),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 15),
-                          child: Text(
-                            "Take note that the time stated are departure times of the bus(es) from their starting point.",
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey[800],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        ...schedules.keys.map((route) {
-                          return Card(
-                            margin: const EdgeInsets.all(10),
-                            shadowColor: Colors.greenAccent,
-                            elevation: 7,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.all(10.0),
-                                  child: Text(
-                                    route,
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                      color: customGreen,
-                                    ),
-                                  ),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 10),
-                                  child: Text(
-                                    routeDescriptions[route] ?? '',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: Colors.grey[800],
-                                    ),
-                                  ),
-                                ),
-                                const Divider(),
-                                ...schedules[route]!.keys.map((day) {
-                                  return Card(
-                                    margin: const EdgeInsets.symmetric(
-                                        horizontal: 10, vertical: 5),
-                                    child: ExpansionTile(
-                                      title: Text(
-                                        day,
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.w600,
-                                          color: customGreen,
-                                        ),
-                                      ),
-                                      children: _buildSessionWidgets(
-                                          schedules[route]![day]!),
-                                    ),
-                                  );
-                                }),
-                              ],
-                            ),
-                          );
-                        }),
-                      ],
+          ? Center(
+        child: Text(
+          errorMessage!,
+          style: const TextStyle(color: Colors.red),
+          textAlign: TextAlign.center,
+        ),
+      )
+          : schedules.isEmpty
+          ? const Center(child: Text('No schedules available'))
+          : ListView(
+        children: [
+          const SizedBox(height: 10),
+          Center(
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 20, vertical: 10),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(30),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.2),
+                    blurRadius: 5,
+                    spreadRadius: 2,
+                  )
+                ],
+              ),
+              child: const Text(
+                "Schedules",
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 15),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 15),
+            child: Text(
+              "Take note that the time stated are departure times of the bus(es) from their starting point.",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey[800],
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+          ...schedules.keys.map((route) {
+            return Card(
+              margin: const EdgeInsets.all(10),
+              shadowColor: Colors.greenAccent,
+              elevation: 7,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(10.0),
+                    child: Text(
+                      route,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: customGreen,
+                      ),
                     ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10),
+                    child: Text(
+                      routeDescriptions[route] ?? '',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey[800],
+                      ),
+                    ),
+                  ),
+                  const Divider(),
+                  ...schedules[route]!.keys.map((day) {
+                    return Card(
+                      margin: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 5),
+                      child: ExpansionTile(
+                        title: Text(
+                          day,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: customGreen,
+                          ),
+                        ),
+                        children: _buildSessionWidgets(
+                            schedules[route]![day]!),
+                      ),
+                    );
+                  }),
+                ],
+              ),
+            );
+          }),
+        ],
+      ),
     );
   }
 
@@ -439,7 +439,7 @@ class _SchedulePageState extends State<SchedulePage> {
                   ],
                 ),
                 ...departureTimes.map(
-                  (timeData) {
+                      (timeData) {
                     return TableRow(
                       children: [
                         Padding(

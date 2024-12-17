@@ -1,5 +1,4 @@
 // bus_stop_data.dart
-
 import 'package:latlong2/latlong.dart';
 
 // BusStop data model
