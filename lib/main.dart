@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'map_display.dart';
 
 import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
+import '/data/firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -11,6 +11,7 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
   runApp(const MaterialApp(
+    debugShowCheckedModeBanner: false,
     home: ShuttleAideHP(),
   ));
 }

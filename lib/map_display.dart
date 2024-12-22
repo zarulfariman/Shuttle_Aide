@@ -10,6 +10,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
 
 import '/pages/schedule.dart';
+import '/pages/announcement.dart';
 import '/bus/bus_movement.dart';
 import '/bus/bus_stop_data.dart';
 import '/bus/station_popup.dart';
@@ -68,7 +69,7 @@ class _MapDisplayState extends State<MapDisplay> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    // _checkLocationPermission(); // Check and request location permission on app start.
+    //_checkLocationPermission(); // Check and request location permission on app start.
     _alignPositionStreamController = StreamController<double?>();
     busMovementService = BusMovementService(
         databaseReference : FirebaseDatabase.instance
@@ -316,12 +317,36 @@ class _MapDisplayState extends State<MapDisplay> with TickerProviderStateMixin {
           ),
         ),
 
+        //Updates button code
+        Positioned(
+          top: 200,
+          right: 16,
+          child: CircleAvatar(
+            radius: 30,
+            backgroundColor: const Color.fromARGB(255, 20, 124, 27),
+            child: IconButton(
+              icon: Image.asset(
+                'assets/updatesButtonBW.png',
+                fit: BoxFit.cover,
+                width: 40,
+                height: 40,
+              ),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const UpdatesPage()),
+                );
+              },
+            ),
+          ),
+        ),
+
         //Conditional "center map to user's current position" button
         if (_hasLocationPermission)
           Stack(
             children: [
               Positioned(
-                top: 200,
+                top: 300,
                 right: 16,
                 child: CircleAvatar(
                   radius: 30,
