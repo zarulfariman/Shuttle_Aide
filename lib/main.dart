@@ -1,12 +1,11 @@
-import 'package:flutter/material.dart';
-//import 'package:flutter/services.dart';
-import 'map_display.dart';
-
 import 'package:firebase_core/firebase_core.dart';
 import '/data/firebase_options.dart';
+import 'package:flutter/material.dart';
+
+import 'map_display.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  //WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
@@ -15,14 +14,6 @@ void main() async {
     home: ShuttleAideHP(),
   ));
 }
-
-/* Old code for reference
-void main() {
-  runApp(const MaterialApp(
-    home: ShuttleAideHP(),
-  ));
-}
-*/
 
 class ShuttleAideHP extends StatelessWidget {
   const ShuttleAideHP({super.key});

@@ -41,8 +41,6 @@ class _MapDisplayState extends State<MapDisplay> with TickerProviderStateMixin {
 
   // for route and polypoints punya
   LatLng? userLocation;
-  double? userLatitude;
-  double? userLongitude;
   var points = <LatLng>[]; // Initialize points as an empty list
   num distance = 0.0;
   num duration = 0.0;
@@ -69,20 +67,11 @@ class _MapDisplayState extends State<MapDisplay> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    //_checkLocationPermission(); // Check and request location permission on app start.
     _alignPositionStreamController = StreamController<double?>();
     busMovementService = BusMovementService(
         databaseReference : FirebaseDatabase.instance
         .ref()
         .child('UsersData/3MkbQmmrGtUJlmUZPdXPk5NhkRg1/gps_readings'),
-        busRoute: [
-          const LatLng(3.249590, 101.733724),
-          const LatLng(3.249790, 101.733324),
-          const LatLng(3.249990, 101.732824),
-          const LatLng(3.250176, 101.732586),
-          const LatLng(3.250715, 101.731209),
-          const LatLng(3.251905, 101.730243),
-        ],
     );
 
     busMovementService.startTracking(
@@ -113,15 +102,12 @@ class _MapDisplayState extends State<MapDisplay> with TickerProviderStateMixin {
       curve: Curves.easeInOut,
     ));
 
-    // Initialize the bus stop markers from busStopsData
+    // // Initialize the bus stop markers from busStopsData
     busStops = _createBusStopMarkers(busStopsData);
 
-    // Fetch data from Firebase
-    // readData();
     _initializeLocation();
   }
 
-  // routing punya
   Future<void> _initializeLocation() async {
     const destination = LatLng(3.2542205231421407, 101.73347585303627); // adjust bila integrate dengan firebase
 
@@ -130,8 +116,6 @@ class _MapDisplayState extends State<MapDisplay> with TickerProviderStateMixin {
     if (permissionGranted) {
       setState(() {
         _hasLocationPermission = routeService.hasLocationPermission;
-        userLatitude = routeService.userLatitude;
-        userLongitude = routeService.userLongitude;
         userLocation = routeService.userLocation;
 
         // Set route data directly from RouteService
@@ -139,7 +123,6 @@ class _MapDisplayState extends State<MapDisplay> with TickerProviderStateMixin {
         distance = routeService.routeDistance;
         duration = routeService.routeDuration;
 
-        // totalDistance = calculateTotalDistance(routeService);
       });
     }
   }
@@ -231,21 +214,6 @@ class _MapDisplayState extends State<MapDisplay> with TickerProviderStateMixin {
           }
           busStopsPopupController.hideAllPopups();
           busPopupController.hideAllPopups();
-        },
-        onSecondaryTap: (_, point) {
-          routeService.updateRoutePoint(point, isPairly); // Update either from or to
-          isPairly = !isPairly; // Toggle isPairly
-
-          // Initialize the location and fetch the route
-          routeService.initializeLocationAndRoute().then((permissionGranted) {
-            if (permissionGranted) {
-              setState(() {
-                points = routeService.routePoints;
-                distance = routeService.routeDistance;
-                duration = routeService.routeDuration;
-              });
-            }
-          });
         },
         onPositionChanged: (MapCamera camera, bool hasGesture) {
           animatedMapController.cancelPreviousAnimations;
@@ -385,16 +353,14 @@ class _MapDisplayState extends State<MapDisplay> with TickerProviderStateMixin {
             ],
           ),
 
-        if (userLatitude != null && userLongitude != null)
+        if (userLocation != null)
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: Column(
               children: [
-                Text('Latitude: $userLatitude'),
-                Text('Longitude: $userLongitude'),
-                // Text('Distance: ${totalDistance.toStringAsFixed(2)} km'), // Format to 2 decimal places
+                Text('Current Location: $userLocation'),
                 FutureBuilder<ClosestBusStopResult>(
-                  future: findClosestBusStop(userLocation!, busStopsData),
+                  future: findClosestBusStop(userLocation!),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return const Text('Calculating closest bus stop...');
@@ -424,25 +390,6 @@ class _MapDisplayState extends State<MapDisplay> with TickerProviderStateMixin {
               strokeWidth: 4.0,
               color: Colors.red,
             ),
-          ],
-        ),
-
-        MarkerLayer(
-          markers: [
-            // Marker for the starting location
-            if (routeService.userLocation != null)
-              Marker(
-                width: 80.0,
-                height: 80.0,
-                point: routeService.userLocation!, // Fetch from dynamically
-                child: const Icon(
-                  Icons.circle,
-                  color: Colors.blue,
-                ),
-              ),
-
-            // Midpoint marker with distance and duration information
-            //     point: routeService.routePoints[math.max(0, (routeService.routePoints.length / 2).floor(),
           ],
         ),
 
@@ -505,6 +452,7 @@ class _MapDisplayState extends State<MapDisplay> with TickerProviderStateMixin {
             );
           },
         ),
+
         PopupMarkerLayer(
           options: PopupMarkerLayerOptions(
             markers: busStops,

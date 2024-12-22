@@ -1,9 +1,8 @@
 import 'package:permission_handler/permission_handler.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:osrm/osrm.dart';
-import 'package:shuttle_aide/calculation/calculate_distance.dart';
 import 'package:shuttle_aide/calculation/calculate_eta.dart';
+import 'package:shuttle_aide/calculation/calculate_distance.dart';
 
 class RouteService {
   LatLng? _from;
@@ -45,11 +44,18 @@ class RouteService {
 
       userLatitude = position.latitude;
       userLongitude = position.longitude;
+
       if (userLatitude != null && userLongitude != null) {
         userLocation = LatLng(userLatitude!, userLongitude!);
-        _from ??= userLocation; // Use user location as default `from`
-        _to ??= destination; // Use destination as default `to`
+
+        ClosestBusStopResult closestBusStopResult = await findClosestBusStop(userLocation!);
+        LatLng? closestStopLocation = closestBusStopResult.busStopLocation;
+
+        _from ??= userLocation; // Use user location as `from`
+        _to ??= closestStopLocation; // Use nearest bus stop as `to`
+
         final routeInfo = await fetchRoute(_from!, _to!);
+
         if (routeInfo != null) {
           routePoints = routeInfo.points;
           routeDistance = routeInfo.distance;
@@ -64,7 +70,7 @@ class RouteService {
   }
 
 // Method to get the user's location
-LatLng? getUserLocation() {
-  return userLocation;
+  LatLng? getUserLocation() {
+    return userLocation;
   }
 }
