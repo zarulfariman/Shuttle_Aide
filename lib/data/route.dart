@@ -35,9 +35,9 @@ class PanelInfo {
             ),
             const SizedBox(height: 8),
             Text(
-              '${(duration / 60).toStringAsFixed(2)} min',
+              '${duration.round()} min',
               style: rightTextStyle,
-            ),
+            )
           ],
         ),
       ],

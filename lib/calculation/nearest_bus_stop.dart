@@ -3,12 +3,16 @@ import '../bus/bus_stop_data.dart';
 
 class ClosestBusStopResult {
   final BusStop? busStop;
-  final double distance;
-  final double? latitude;
-  final double? longitude;
+  final double distance; // Distance in meters
+  final double duration; // Duration in minutes
   final LatLng? busStopLocation;
 
-  ClosestBusStopResult({required this.busStop, required this.distance, this.latitude, this.longitude, this.busStopLocation});
+  ClosestBusStopResult({
+    required this.busStop,
+    required this.distance,
+    required this.duration,
+    this.busStopLocation,
+  });
 }
 
 Future<ClosestBusStopResult> findClosestBusStop(LatLng userLocation) async {
@@ -16,8 +20,7 @@ Future<ClosestBusStopResult> findClosestBusStop(LatLng userLocation) async {
     return ClosestBusStopResult(
       busStop: null,
       distance: double.infinity,
-      latitude: null,
-      longitude: null,
+      duration: double.infinity,
       busStopLocation: null,
     );
   }
@@ -43,16 +46,22 @@ Future<ClosestBusStopResult> findClosestBusStop(LatLng userLocation) async {
   }
 
   LatLng? busStopLocation;
+  double durationInMinutes = double.infinity;
+
   if (closestStop != null) {
-    // Store latitude and longitude masuk busStopLocation
+    // Store latitude and longitude in busStopLocation
     busStopLocation = LatLng(closestStop.latLng.latitude, closestStop.latLng.longitude);
+
+    // Calculate duration (assuming an average walking speed of 5 km/h)
+    const double averageWalkingSpeedKmH = 5.0;
+    double durationInHours = shortestDistance / 1000 / averageWalkingSpeedKmH;
+    durationInMinutes = durationInHours * 60;
   }
 
   return ClosestBusStopResult(
     busStop: closestStop,
     distance: shortestDistance,
-    busStopLocation: busStopLocation, // Directly store LatLng here
+    duration: durationInMinutes,
+    busStopLocation: busStopLocation,
   );
 }
-
-

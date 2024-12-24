@@ -2,7 +2,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:shuttle_aide/calculation/calculate_eta.dart';
-import 'package:shuttle_aide/calculation/calculate_distance.dart';
+import 'package:shuttle_aide/calculation/nearest_bus_stop.dart';
 
 class RouteService {
   LatLng? _from;

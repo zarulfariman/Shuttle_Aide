@@ -14,7 +14,7 @@ import '/pages/announcement.dart';
 import '/bus/bus_movement.dart';
 import '/bus/bus_stop_data.dart';
 import '/bus/station_popup.dart';
-import '/calculation/calculate_distance.dart';
+import '/calculation/nearest_bus_stop.dart';
 import '/data/route.dart';
 import '/user/user_location.dart';
 
@@ -206,7 +206,6 @@ class _MapDisplayState extends State<MapDisplay> with TickerProviderStateMixin {
           if (_followBus) {
             setState(() {
               _followBus = false; // Dismiss the popup immediately when tapping anywhere on the map
-              //_visible = !_visible;
               _visible = false;
               panelContent = 'Bus Route Info'; // Reset to default content
             });
@@ -369,12 +368,15 @@ class _MapDisplayState extends State<MapDisplay> with TickerProviderStateMixin {
                     } else if (!snapshot.hasData || snapshot.data == null) {
                       return const Text('No bus stops found.');
                     } else {
+                      final ClosestBusStopResult result = snapshot.data!;
                       final BusStop closestStop = snapshot.data!.busStop!;
-                      final double distance = snapshot.data!.distance;
+                      final double distanceInKm = result.distance/1000;
+                      final double durationInMinutes = result.duration;
                       return Text(
                         'Closest Stop: ${closestStop.name}\n'
                             'Description: ${closestStop.description}\n'
-                        'Distance: ${(distance / 1000).toStringAsFixed(2)} km', // Format to km with 2 decimal places
+                          'Distance: ${distanceInKm.toStringAsFixed(2)} km \n'
+                          'Estimated Duration: ${durationInMinutes.toStringAsFixed(0)} minutes\n',
                       );
                     }
                   },
