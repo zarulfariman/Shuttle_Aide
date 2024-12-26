@@ -1,11 +1,11 @@
 import 'package:firebase_database/firebase_database.dart';
 import 'package:latlong2/latlong.dart';
-import '/bus/bus_movement.dart'; // Adjust the import path as needed
-import '/calculation/nearest_bus_stop.dart'; // Your `findClosestBusStop` file
+import '/bus/bus_movement.dart';
+import '/calculation/nearest_bus_stop.dart';
 
 class BusToNearestStopResult {
-  final double distance; // Distance in m
-  final double duration; // Duration in mins
+  final double distance; // Distance in meters
+  final double duration; // Duration in minutes
 
   BusToNearestStopResult({required this.distance, required this.duration});
 }
@@ -26,6 +26,7 @@ Future<BusToNearestStopResult?> calculateBusToNearestStop() async {
     LatLng nearestBusStopLocation = closestStopResult.busStopLocation!;
 
     final Distance distance = Distance();
+    // Get the distance in meters
     double distanceInMeter = distance.as(
       LengthUnit.Meter,
       busLocation,
@@ -33,14 +34,15 @@ Future<BusToNearestStopResult?> calculateBusToNearestStop() async {
     );
 
     // Calculate duration (assuming an average bus speed of 30 km/h)
-    const double averageBusSpeedKmH = 30.0; // You can adjust this value
-    double durationInHours = distanceInMeter / 1000 / averageBusSpeedKmH;
+    const double averageBusSpeedKmH = 30.0;
+    double distanceInKm = distanceInMeter / 1000; // Convert distance to kilometers for duration calculation
+    double durationInHours = distanceInKm / averageBusSpeedKmH;
     double durationInMinutes = durationInHours * 60;
 
-    // Return the result as an object
+    // Return the result as an object with distance in meters
     return BusToNearestStopResult(
-      distance: distanceInMeter,
-      duration: durationInMinutes,
+      distance: distanceInMeter, // Return distance in meters
+      duration: durationInMinutes, // Duration in minutes
     );
   }
   return null;

@@ -17,6 +17,14 @@ class PanelInfo {
     required double distance,
     required double duration,
   }) {
+    // Determine if distance should be displayed in meters or kilometers
+    String formattedDistance;
+    if (distance > 1000) {
+      formattedDistance = '${(distance / 1000).toStringAsFixed(2)} km'; // in kilometers
+    } else {
+      formattedDistance = '${distance.round()} m'; // in meters
+    }
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -30,7 +38,7 @@ class PanelInfo {
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Text(
-              '${(distance / 1000).toStringAsFixed(2)} km',
+              formattedDistance,
               style: rightTextStyle,
             ),
             const SizedBox(height: 8),

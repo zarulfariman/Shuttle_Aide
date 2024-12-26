@@ -11,12 +11,18 @@ import 'package:sliding_up_panel/sliding_up_panel.dart';
 
 import '/pages/schedule.dart';
 import '/pages/announcement.dart';
+
 import '/bus/bus_movement.dart';
 import '/bus/bus_stop_data.dart';
 import '/bus/station_popup.dart';
+
 import '/calculation/nearest_bus_stop.dart';
+import '/calculation/bus_distance.dart';
+import '/calculation/calculate_eta.dart';
+
 import '/data/route.dart';
 import '/user/user_location.dart';
+
 
 class MapDisplay extends StatefulWidget {
   const MapDisplay({super.key});
@@ -38,7 +44,7 @@ class _MapDisplayState extends State<MapDisplay> with TickerProviderStateMixin {
 
   final RouteService routeService = RouteService();
   late BusMovementService busMovementService;
-
+  // bus to bus stop duration
   // for route and polypoints punya
   LatLng? userLocation;
   var points = <LatLng>[]; // Initialize points as an empty list
@@ -114,18 +120,31 @@ class _MapDisplayState extends State<MapDisplay> with TickerProviderStateMixin {
     final permissionGranted = await routeService.initializeLocation(destination);
 
     if (permissionGranted) {
-      setState(() {
-        _hasLocationPermission = routeService.hasLocationPermission;
-        userLocation = routeService.userLocation;
+      final userLoc = routeService
+          .userLocation; // Fetch user location from routeService
 
-        // Set route data directly from RouteService
-        points = routeService.routePoints;
-        distance = routeService.routeDistance;
-        duration = routeService.routeDuration;
+      if (userLoc != null) {
+        // Calculate distance and duration using fetchRoute
+        final routeInfo = await fetchRoute(userLoc);
 
-      });
+        if (routeInfo != null) {
+          setState(() {
+            _hasLocationPermission = routeService.hasLocationPermission;
+            userLocation = routeService.userLocation;
+
+            // Set only distance and duration from fetchRoute
+            distance = routeInfo.distance;
+            duration = routeInfo.duration;
+
+            // Polyline
+            points = routeService.routePoints;
+          });
+        }
+      }
     }
   }
+
+
 
   @override
   void dispose() {
@@ -179,9 +198,9 @@ class _MapDisplayState extends State<MapDisplay> with TickerProviderStateMixin {
                       child: Padding(
                         padding: const EdgeInsets.all(16.0),
                         child: PanelInfo.buildPanelContent(
-                            leftText: _followBus ? selectedBusInfo : panelContent,
-                            distance: distance.toDouble(),
-                            duration: duration.toDouble()
+                          leftText: _followBus ? selectedBusInfo : panelContent,
+                          distance: distance != null ? distance.toDouble() : 0.0, // Default value if null
+                          duration: duration != null ? duration.toDouble() : 0.0, // Default value if null
                         ),
                       ),
                     ),
@@ -194,6 +213,7 @@ class _MapDisplayState extends State<MapDisplay> with TickerProviderStateMixin {
       },
     );
   }
+
 
   Widget _buildMap() {
     return FlutterMap(
@@ -350,39 +370,6 @@ class _MapDisplayState extends State<MapDisplay> with TickerProviderStateMixin {
                 ),
               ),
             ],
-          ),
-
-        if (userLocation != null)
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Column(
-              children: [
-                Text('Current Location: $userLocation'),
-                FutureBuilder<ClosestBusStopResult>(
-                  future: findClosestBusStop(userLocation!),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Text('Calculating closest bus stop...');
-                    } else if (snapshot.hasError) {
-                      return Text('Error: ${snapshot.error}');
-                    } else if (!snapshot.hasData || snapshot.data == null) {
-                      return const Text('No bus stops found.');
-                    } else {
-                      final ClosestBusStopResult result = snapshot.data!;
-                      final BusStop closestStop = snapshot.data!.busStop!;
-                      final double distanceInKm = result.distance/1000;
-                      final double durationInMinutes = result.duration;
-                      return Text(
-                        'Closest Stop: ${closestStop.name}\n'
-                            'Description: ${closestStop.description}\n'
-                          'Distance: ${distanceInKm.toStringAsFixed(2)} km \n'
-                          'Estimated Duration: ${durationInMinutes.toStringAsFixed(0)} minutes\n',
-                      );
-                    }
-                  },
-                ),
-              ],
-            ),
           ),
 
         PolylineLayer(

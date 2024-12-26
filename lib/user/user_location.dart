@@ -12,9 +12,6 @@ class RouteService {
   double? userLongitude;
   bool hasLocationPermission = false;
   List<LatLng> routePoints = [];
-  num routeDistance = 0.0;
-  num routeDuration = 0.0;
-  double totalDistance = 0.0;
 
   // Method to update `from` or `to`
   void updateRoutePoint(LatLng point, bool isFrom) {
@@ -54,12 +51,10 @@ class RouteService {
         _from ??= userLocation; // Use user location as `from`
         _to ??= closestStopLocation; // Use nearest bus stop as `to`
 
-        final routeInfo = await fetchRoute(_from!, _to!);
+        final routeInfo = await fetchRoute(_from!);
 
         if (routeInfo != null) {
           routePoints = routeInfo.points;
-          routeDistance = routeInfo.distance;
-          routeDuration = routeInfo.duration;
         }
         hasLocationPermission = true;
       }

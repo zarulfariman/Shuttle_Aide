@@ -5,7 +5,7 @@ import '/calculation/nearest_bus_stop.dart';
 
 class RouteInformation {
   final List<LatLng> points;
-  final num distance;
+  final num distance; // Distance in meters
   final num duration;
 
   RouteInformation({
@@ -15,8 +15,32 @@ class RouteInformation {
   });
 }
 
-Future<RouteInformation?> fetchRoute(LatLng from, LatLng to) async {
+Future<RouteInformation?> fetchRoute(LatLng userLocation) async {
+  // Find the nearest bus stop to the user's location
+  ClosestBusStopResult closestStopResult = await findClosestBusStop(userLocation);
 
+  if (closestStopResult.busStop == null) {
+    return null; // Return null if no bus stop is found
+  }
+
+  // Set `from` as the user's location and `to` as the nearest bus stop
+  LatLng from = userLocation;
+  LatLng to = closestStopResult.busStop!.latLng;
+
+  // Calculate the distance in meters
+  double distanceInMeters = calculateDistance(
+    from.latitude,
+    from.longitude,
+    to.latitude,
+    to.longitude,
+  );
+
+  // Calculate walking duration in minutes (walking speed assumed 5 km/h)
+  const double walkingSpeedKmH = 5.0;
+  double durationInHours = distanceInMeters / 1000 / walkingSpeedKmH;
+  double walkingDurationInMinutes = durationInHours * 60;
+
+  // Create an OSRM instance and request route details
   final osrm = Osrm();
   final options = RouteRequest(
     coordinates: [
@@ -27,27 +51,27 @@ Future<RouteInformation?> fetchRoute(LatLng from, LatLng to) async {
   );
 
   final route = await osrm.route(options);
+
+  // Extract route details (points along the route)
   final points = route.routes.first.geometry!.lineString!.coordinates.map((e) {
     var location = e.toLocation();
     return LatLng(location.lat, location.lng);
   }).toList();
 
-  final distance = route.routes.first.distance!; // distance from user to the bus stop
+  // Bus to nearest stop duration (calculated by the bus movement service)
+  BusToNearestStopResult? busToStopResult = await calculateBusToNearestStop();
+  if (busToStopResult == null) {
+    return null; // Return null if bus to stop duration is not available
+  }
 
-  // Get the closest bus stop duration (user to bus stop)
-  ClosestBusStopResult closestStopResult = await findClosestBusStop(from);
-  double userToBusStopDuration = closestStopResult.distance / 1000 / 30 * 60; // Assuming 30 km/h
+  double busToBusStopDuration = busToStopResult.duration;
 
-  // bus to bus stop duration
-  BusToNearestStopResult? busToNearestStopResult = await calculateBusToNearestStop();
-  double busToBusStopDuration = busToNearestStopResult?.duration ?? 0.0;
-
-  // Sum both durations
-  double totalDuration = userToBusStopDuration + busToBusStopDuration; // bus to user ETA
+  // Return route information with distance in meters and total duration
+  double totalDuration = walkingDurationInMinutes + busToBusStopDuration;
 
   return RouteInformation(
     points: points,
-    distance: distance,
-    duration: totalDuration,
+    distance: distanceInMeters, // Distance in meters
+    duration: totalDuration, // Total duration in minutes
   );
 }

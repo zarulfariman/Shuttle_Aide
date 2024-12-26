@@ -1,6 +1,9 @@
+import 'dart:math';
 import 'package:latlong2/latlong.dart';
-import '../bus/bus_stop_data.dart';
+import '/bus/bus_stop_data.dart';
+import '/calculation/bus_distance.dart';
 
+// Class to hold closest bus stop result
 class ClosestBusStopResult {
   final BusStop? busStop;
   final double distance; // Distance in meters
@@ -15,28 +18,35 @@ class ClosestBusStopResult {
   });
 }
 
+// Haversine formula to calculate distance in meters
+double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
+  const double p = 0.017453292519943295; // π/180
+  final double a = 0.5 -
+      cos((lat2 - lat1) * p) / 2 +
+      cos(lat1 * p) * cos(lat2 * p) * (1 - cos((lon2 - lon1) * p)) / 2;
+  return 12742 * asin(sqrt(a)) * 1000; // Distance in meters (multiplied by 1000)
+}
+
 Future<ClosestBusStopResult> findClosestBusStop(LatLng userLocation) async {
   if (busStopsData.isEmpty) {
     return ClosestBusStopResult(
       busStop: null,
-      distance: double.infinity,
+      distance: double.infinity, // Distance in meters
       duration: double.infinity,
       busStopLocation: null,
     );
   }
 
-  // Instantiate Distance to calculate distances
-  final Distance distance = Distance();
-
-  // Find the closest bus stop
   BusStop? closestStop;
   double shortestDistance = double.infinity;
 
+  // Find the closest bus stop based on the shortest distance in meters
   for (BusStop stop in busStopsData) {
-    final double dist = distance.as(
-      LengthUnit.Meter,
-      userLocation,
-      stop.latLng,
+    final double dist = calculateDistance(
+      userLocation.latitude,
+      userLocation.longitude,
+      stop.latLng.latitude,
+      stop.latLng.longitude,
     );
 
     if (dist < shortestDistance) {
@@ -49,19 +59,18 @@ Future<ClosestBusStopResult> findClosestBusStop(LatLng userLocation) async {
   double durationInMinutes = double.infinity;
 
   if (closestStop != null) {
-    // Store latitude and longitude in busStopLocation
     busStopLocation = LatLng(closestStop.latLng.latitude, closestStop.latLng.longitude);
 
-    // Calculate duration (assuming an average walking speed of 5 km/h)
+    // Calculate walking duration (assuming an average walking speed of 5 km/h)
     const double averageWalkingSpeedKmH = 5.0;
-    double durationInHours = shortestDistance / 1000 / averageWalkingSpeedKmH;
-    durationInMinutes = durationInHours * 60;
+    double durationInHours = shortestDistance / 1000 / averageWalkingSpeedKmH; // Convert to kilometers for walking speed calculation
+    durationInMinutes = durationInHours * 60; // Convert hours to minutes
   }
 
   return ClosestBusStopResult(
     busStop: closestStop,
-    distance: shortestDistance,
-    duration: durationInMinutes,
+    distance: shortestDistance, // Distance in meters
+    duration: durationInMinutes, // Duration in minutes
     busStopLocation: busStopLocation,
   );
 }
