@@ -41,13 +41,18 @@ class BusMovementService {
       final data = dataSnapshot.value as Map<dynamic, dynamic>?;
 
       if (data != null) {
-        final latestReading = data.entries.first.value;
+        final latestReading = data.entries.last.value;
 
         // Update nextPosition with Firebase values
         double newLatitude = double.parse(latestReading['latitude'].toString());
         double newLongitude = double.parse(latestReading['longitude'].toString());
 
+        // Update current and next positions
+        _currentPosition = _nextPosition;
         _nextPosition = LatLng(newLatitude, newLongitude);
+
+        // Notify listeners with the updated position
+        _positionStreamController.add(_nextPosition);
       }
     });
   }

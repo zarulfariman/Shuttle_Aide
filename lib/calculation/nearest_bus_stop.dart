@@ -1,7 +1,6 @@
 import 'dart:math';
 import 'package:latlong2/latlong.dart';
 import '/bus/bus_stop_data.dart';
-import '/calculation/bus_distance.dart';
 
 // Class to hold closest bus stop result
 class ClosestBusStopResult {
