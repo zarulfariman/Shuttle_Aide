@@ -5,7 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 
 class UpdatesPage extends StatefulWidget {
-  const UpdatesPage({Key? key}) : super(key: key);
+  const UpdatesPage({super.key});
 
   @override
   State<UpdatesPage> createState() => _UpdatesPageState();

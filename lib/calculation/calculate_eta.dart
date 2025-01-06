@@ -3,19 +3,19 @@ import 'package:osrm/osrm.dart';
 import '/calculation/bus_distance.dart';
 import '/calculation/nearest_bus_stop.dart';
 
-class RouteInformation {
+class ETAInformation {
   final List<LatLng> points;
   final num distance; // Distance in meters
   final num duration;
 
-  RouteInformation({
+  ETAInformation({
     required this.points,
     required this.distance,
     required this.duration,
   });
 }
 
-Future<RouteInformation?> fetchRoute(LatLng userLocation) async {
+Future<ETAInformation?> fetchRoute(LatLng userLocation) async {
   // Find the nearest bus stop to the user's location
   ClosestBusStopResult closestStopResult = await findClosestBusStop(userLocation);
 
@@ -69,7 +69,7 @@ Future<RouteInformation?> fetchRoute(LatLng userLocation) async {
   // Return route information with distance in meters and total duration
   double totalDuration = walkingDurationInMinutes + busToBusStopDuration;
 
-  return RouteInformation(
+  return ETAInformation(
     points: points,
     distance: distanceInMeters, // Distance in meters
     duration: totalDuration, // Total duration in minutes

@@ -15,7 +15,9 @@ class BusMovementService {
   BusMovementService({
     required this.databaseReference,
     this.updateInterval = const Duration(seconds: 3),
+  // ignore: prefer_const_constructors
   })  : _currentPosition = LatLng(3.249590, 101.733724),
+        // ignore: prefer_const_constructors
         _nextPosition = LatLng(3.249590, 101.733724);
 
   Stream<LatLng> get positionStream => _positionStreamController.stream;

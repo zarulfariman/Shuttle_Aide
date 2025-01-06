@@ -13,8 +13,8 @@ class StationPopup extends StatefulWidget {
     required this.stopName,
     required this.imagePath,
     required this.description,
-    Key? key
-  }) : super(key: key);
+    super.key
+  });
 
   @override
   _StationPopupState createState() => _StationPopupState();

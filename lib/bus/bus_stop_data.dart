@@ -32,6 +32,16 @@ String getImagePath() {
       return 'assets/sl159.png';
     case 'SL160 IRKHS':
       return 'assets/sl160.png';
+    case 'SL161 Aikol':
+      return 'assets/sl161.png';
+    case 'KICT Gazebo':
+      return 'assets/kict.png';
+    case 'Mahallah Pickup/Drop 1':
+      return 'assets/mahallah1.png';
+    case 'Mahallah Pickup/Drop 2':
+      return 'assets/mahallah2.png';
+    case 'Mahallah Pickup/Drop 3':
+      return 'assets/mahallah3.png';
     default:
       return 'assets/stopdefault.png';
     }
@@ -84,5 +94,30 @@ final List<BusStop> busStopsData = [
     name: 'SL160 IRKHS',
     description: 'This is the Irkhs faculty bus stop.',
     latLng: const LatLng(3.253111390523607, 101.73603089082691),
+  ),
+  BusStop(
+    name: 'SL161 Aikol',
+    description: 'This is the Library & AIKOL faculty bus stop.',
+    latLng: const LatLng(3.252328016224476, 101.73870026354851),
+  ),
+  BusStop(
+    name: 'KICT Gazebo',
+    description: 'This is the KICT bus pickup/drop point.',
+    latLng: const LatLng(3.25430969603212, 101.7288319783508),
+  ),
+  BusStop(
+    name: 'Mahallah Pickup/Drop 1',
+    description: 'This is the bus pickup/drop point for Mahallah Aminah, Hafsah & Asma',
+    latLng: const LatLng(3.2556577727551512, 101.73320916635936),
+  ),
+  BusStop(
+    name: 'Mahallah Pickup/Drop 2',
+    description: 'This is the bus pickup/drop point for Mahallah Asiah',
+    latLng: const LatLng(3.2580733451288224, 101.73360457765988),
+  ),
+  BusStop(
+    name: 'Mahallah Pickup/Drop 3',
+    description: 'This is the bus pickup/drop point for Mahallah Ruqayyah, Halimah and Maryam',
+    latLng: const LatLng(3.259233924760964, 101.73443386890928),
   ),
 ];

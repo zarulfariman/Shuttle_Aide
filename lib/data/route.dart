@@ -2,18 +2,10 @@ import 'package:flutter/material.dart';
 
 class PanelInfo {
   static Widget buildPanelContent({
-    required double distance,
-    required double duration,
+    required num duration,
+    required num distance,
     required bool isBusSelected, // Boolean to determine if Bus 1 is selected
   }) {
-    // Determine if distance should be displayed in meters or kilometers
-    String formattedDistance;
-    if (distance > 1000) {
-      formattedDistance = '${(distance / 1000).toStringAsFixed(2)} km'; // in kilometers
-    } else {
-      formattedDistance = '${distance.round()} m'; // in meters
-    }
-
     if (isBusSelected) {
       // Display when Bus 1 is selected
       return Column(
@@ -51,26 +43,43 @@ class PanelInfo {
             style: TextStyle(fontSize: 16),
           ),
           const SizedBox(height: 20),
-          // Distance and ETA
+          //ETA
           Row(
             children: [
               const Icon(Icons.timer, color: Colors.green),
               const SizedBox(width: 10),
-              Text(
-                "ETA: ${duration.round()} min",
-                style: const TextStyle(fontSize: 16),
-              ),
+              if(duration > 60)
+                Text(
+                  'ETA (to nearest bus stop):- \n${(duration/60).round()} minutes',
+                  style: const TextStyle(fontSize: 16),
+                ),
+              if(duration < 60)
+                Text(
+                  'ETA (to nearest bus stop):- \n${duration.round()} seconds',
+                  style: const TextStyle(fontSize: 16),
+                ),
+              if(duration < 0)
+                const Text(
+                  'Calculating ETA...',
+                  style: TextStyle(fontSize: 16),
+                ),
             ],
           ),
           const SizedBox(height: 10),
           Row(
             children: [
-              const Icon(Icons.map, color: Colors.blue),
+              const Icon(Icons.map_outlined, color: Colors.blue),
               const SizedBox(width: 10),
-              Text(
-                "Distance: $formattedDistance",
-                style: const TextStyle(fontSize: 16),
-              ),
+              if(distance < 1000)
+                Text(
+                  "Distance: ${distance.round()} m",
+                  style: const TextStyle(fontSize: 16),
+                ),
+              if(distance > 1000)
+                Text(
+                  "Distance: ${(distance/1000).toStringAsFixed(2)} km",
+                  style: const TextStyle(fontSize: 16),
+                ),
             ],
           ),
         ],
@@ -84,8 +93,8 @@ class PanelInfo {
           _buildBusBox(
             iconColor: const Color.fromARGB(255, 0, 0, 139),
             busName: "Bus 1",
-            distance: formattedDistance,
             duration: duration,
+            distance: distance,
           ),
           const SizedBox(height: 20),
           // Bus 2 Container
@@ -111,8 +120,8 @@ class PanelInfo {
     required Color iconColor,
     required String busName,
     String? additionalInfo,
-    String? distance,
-    double? duration,
+    num? duration,
+    num? distance,
   }) {
     return Container(
       padding: const EdgeInsets.all(10),
@@ -143,29 +152,67 @@ class PanelInfo {
               ),
             ],
           ),
-          if (distance != null && duration != null) ...[
-            const SizedBox(height: 10),
+          if (duration != null) ...[
+            const SizedBox(height: 20),
             Row(
               children: [
                 const Icon(Icons.timer, color: Colors.green),
                 const SizedBox(width: 10),
-                Text(
-                  "ETA: ${duration.round()} min",
-                  style: const TextStyle(fontSize: 16),
-                ),
+                if(duration > 60)
+                  Text(
+                    'ETA (to nearest bus stop):- \n${(duration/60).round()} minutes',
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                  /*RichText(
+                    text: TextSpan(
+                      style: TextStyle(fontSize: 16, color: Colors.black),
+                      children: [
+                        TextSpan(text: 'ETA (to nearest bus stop):-', style: const TextStyle(fontWeight: FontWeight.bold)),
+                        TextSpan(text: '\n${(duration/60).round()} minutes'),
+                      ]
+                    ),
+                  ),*/
+                if(duration < 60)
+                  Text(
+                    'ETA (to nearest bus stop):- \n${duration.round()} seconds',
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                  /*RichText(
+                    text: TextSpan(
+                      style: TextStyle(fontSize: 16, color: Colors.black),
+                      children: [
+                        TextSpan(text: 'ETA (to nearest bus stop):-', style: const TextStyle(fontWeight: FontWeight.bold)),
+                        TextSpan(text: '\n${duration.round()} minutes'),
+                      ]
+                    ),
+                  ),*/
+                if(duration < 0)
+                  const Text(
+                    'Calculating ETA...',
+                    style: TextStyle(fontSize: 16),
+                  ),
               ],
             ),
+          ],
+          if (distance != null) ...[
             const SizedBox(height: 10),
             Row(
               children: [
-                const Icon(Icons.map, color: Colors.blue),
+                const Icon(Icons.map_outlined, color: Colors.blue),
                 const SizedBox(width: 10),
-                Text(
-                  "Distance: $distance",
-                  style: const TextStyle(fontSize: 16),
-                ),
+                if(distance < 1000)
+                  Text(
+                    "Distance: ${distance.round()} m",
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                if(distance > 1000)
+                  Text(
+                    "Distance: ${(distance/1000).toStringAsFixed(2)} km",
+                    style: const TextStyle(fontSize: 16),
+                  ),
               ],
             ),
+            const SizedBox(height: 10),
           ],
           if (additionalInfo != null) ...[
             const SizedBox(height: 10),

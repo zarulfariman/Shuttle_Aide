@@ -21,6 +21,11 @@ import '/calculation/calculate_eta.dart';
 import '/data/route.dart';
 import '/user/user_location.dart';
 
+//Trial for nearest bus stop
+import 'calculation/nearest_bus_stop.dart';
+import 'package:geolocator/geolocator.dart';
+//Trial for ETA
+import 'package:osrm/osrm.dart';
 
 class MapDisplay extends StatefulWidget {
   const MapDisplay({super.key});
@@ -31,8 +36,12 @@ class MapDisplay extends StatefulWidget {
 
 class _MapDisplayState extends State<MapDisplay> with TickerProviderStateMixin {
 
-  bool _hasLocationPermission = false; // Tracks whether the user granted location permission.
+  ClosestBusStopResult? closestBusStop;
+  Timer? _timer;
+  num etaToNearestBusStop = 0.0;
+  num distanceToNearestBusStop  = 0.0;
 
+  bool _hasLocationPermission = false; // Tracks whether the user granted location permission.
   bool _followBus = false; // Bool variable when bus is pressed.
   bool _visible = false;
 
@@ -67,6 +76,8 @@ class _MapDisplayState extends State<MapDisplay> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
+    //Trial
+    _startUpdatingNearestBusStop();
     _alignPositionStreamController = StreamController<double?>();
     busMovementService = BusMovementService(
         databaseReference : FirebaseDatabase.instance
@@ -81,7 +92,7 @@ class _MapDisplayState extends State<MapDisplay> with TickerProviderStateMixin {
           animatedMapController.centerOnPoint(
             position,
             curve: Curves.easeInOut,
-            duration: const Duration(seconds: 2),
+            duration: const Duration(seconds: 1),
           );
         }
       },
@@ -108,11 +119,12 @@ class _MapDisplayState extends State<MapDisplay> with TickerProviderStateMixin {
     _initializeLocation();
   }
 
+  
   Future<void> _initializeLocation() async {
     const destination = LatLng(3.2542205231421407, 101.73347585303627); // adjust bila integrate dengan firebase
 
     final permissionGranted = await routeService.initializeLocation(destination);
-
+  
     if (permissionGranted) {
       final userLoc = routeService
           .userLocation; // Fetch user location from routeService
@@ -137,16 +149,145 @@ class _MapDisplayState extends State<MapDisplay> with TickerProviderStateMixin {
       }
     }
   }
-
-
+  
 
   @override
   void dispose() {
-    // _timer.cancel();
     super.dispose();
+    //Trial
+    _timer?.cancel();
     _heightAnimationController.dispose();
     busMovementService.stopTracking();
   }
+  
+  //Function to fetch nearest bus stop, and update eta+distance every 15 seconds
+  void _startUpdatingNearestBusStop() {
+    _timer = Timer.periodic(const Duration(seconds: 15), (timer) async {
+      try {
+        Position position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high,
+        );
+        LatLng userLocation = LatLng(position.latitude, position.longitude);
+
+        ClosestBusStopResult result = await findClosestBusStop(userLocation);
+
+        if (result.busStopLocation != null) {
+          LatLng busLocation = busMovementService.currentPosition;
+          LatLng closestStopCoordinates = result.busStopLocation!; // Safe null check
+
+          Map<String, num> etaDistance =
+              await calculateETADistance(busLocation, closestStopCoordinates);
+
+          setState(() {
+            closestBusStop = result;
+            etaToNearestBusStop = etaDistance["eta"] ?? 0.0; // Save ETA value
+            distanceToNearestBusStop = etaDistance["distance"] ?? 0.0; // Save Distance value
+          });
+        } else {
+          debugPrint('No closest bus stop found.');
+          setState(() {
+            closestBusStop = result;
+            etaToNearestBusStop = 0.0; // Reset ETA if no bus stop is found
+            distanceToNearestBusStop = 0.0; // Reset Distance
+          });
+        }
+      } catch (e) {
+        // Handle location fetch error
+        debugPrint('Error fetching user location: $e');
+      }
+    });
+  }
+
+  //Request function os OSRM for routing to obtain ETA and Distance
+  Future<Map<String, num>> calculateETADistance(LatLng from, LatLng to) async {
+    try {
+      final osrm = Osrm();
+      final options = RouteRequest(
+        coordinates: [
+          (from.longitude, from.latitude),
+          (to.longitude, to.latitude),
+        ],
+        continueStraight: OsrmContinueStraight.true_,
+        profile: OsrmRequestProfile.bike,
+        overview: OsrmOverview.full,
+      );
+
+      final route = await osrm.route(options);
+
+      final duration = route.routes.first.duration!; // Duration in seconds
+      final distance = route.routes.first.distance!; // Distance in meters
+
+      return {
+        "eta": duration,
+        "distance": distance,
+      };
+    } catch (e) {
+      debugPrint('Error calculating ETA or Distance: $e');
+      return {
+        "eta": -1,
+        "distance": -1,
+      }; // Return -1 for both in case of error
+    }
+  }
+
+
+  /*
+  //Function to get the nearest bus stop to user location and calculate the ETA
+  void _startUpdatingNearestBusStop() {
+    _timer = Timer.periodic(const Duration(seconds: 15), (timer) async {
+      try {
+        Position position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high,
+        );
+        LatLng userLocation = LatLng(position.latitude, position.longitude);
+
+        ClosestBusStopResult result = await findClosestBusStop(userLocation);
+
+        if (result.busStopLocation != null) {
+          LatLng busLocation = busMovementService.currentPosition;
+          LatLng closestStopCoordinates = result.busStopLocation!; // Safe null check
+
+          num eta = await calculateETA(busLocation, closestStopCoordinates);
+
+          setState(() {
+            closestBusStop = result;
+            etaToNearestBusStop = eta; // Save ETA value
+          });
+        } else {
+          debugPrint('No closest bus stop found.');
+          setState(() {
+            closestBusStop = result;
+            etaToNearestBusStop = 0.0; // Reset ETA if no bus stop is found
+          });
+        }
+      } catch (e) {
+        // Handle location fetch error
+        debugPrint('Error fetching user location: $e');
+      }
+    });
+  }
+
+  Future<num> calculateETA(LatLng from, LatLng to) async {
+    try {
+      final osrm = Osrm();
+      final options = RouteRequest(
+        coordinates: [
+          (from.longitude, from.latitude),
+          (to.longitude, to.latitude),
+        ],
+        continueStraight: OsrmContinueStraight.true_,
+        profile: OsrmRequestProfile.car,
+        overview: OsrmOverview.full,
+      );
+
+      final route = await osrm.route(options);
+      return route.routes.first.duration!; // Duration in seconds
+    } catch (e) {
+      debugPrint('Error calculating ETA: $e');
+      return -1; // Return -1 if there's an error
+    }
+  }
+  */
 
   @override
   Widget build(BuildContext context) {
@@ -192,8 +333,8 @@ class _MapDisplayState extends State<MapDisplay> with TickerProviderStateMixin {
                       child: Padding(
                         padding: const EdgeInsets.all(16.0),
                         child: PanelInfo.buildPanelContent(
-                          distance: distance.toDouble(),  // Directly passing the value
-                          duration: duration.toDouble(),  // Directly passing the value
+                          duration: etaToNearestBusStop,  // Directly passing the value
+                          distance: distanceToNearestBusStop, // Directly passing the value
                           isBusSelected: _followBus, // Pass the boolean value here
                         ),
                       ),
@@ -242,6 +383,14 @@ class _MapDisplayState extends State<MapDisplay> with TickerProviderStateMixin {
             if (!snapshot.hasData) return Container(); // Handle no data gracefully
 
             final newPosition = snapshot.data!;
+
+            if (_followBus) {
+              animatedMapController.centerOnPoint(
+                newPosition,
+                curve: Curves.easeInOut,
+                duration: const Duration(seconds: 1), // Smooth animation
+              );
+            }
             
             return TweenAnimationBuilder<LatLng>(
               tween: LatLngTween(
@@ -283,11 +432,11 @@ class _MapDisplayState extends State<MapDisplay> with TickerProviderStateMixin {
                     markerTapBehavior: MarkerTapBehavior.custom(
                       (popupSpec, popupState, popupController) {
                         //busStopsPopupController.showPopupsOnlyForSpecs([popupSpec]);
-                        animatedMapController.centerOnPoint(
+                        /*animatedMapController.centerOnPoint(
                           position,
                           curve: Curves.easeInOut,
                           duration: Duration(milliseconds: 800),
-                        );
+                        ); */
                         busStopsPopupController.hideAllPopups();
                         setState(() {
                           _followBus = true;
@@ -485,14 +634,61 @@ class _MapDisplayState extends State<MapDisplay> with TickerProviderStateMixin {
                     color: Colors.blue,
                     size: 30,
                   ),
-                  accuracyCircleColor: Colors.blue.withOpacity(0.1),
+                  accuracyCircleColor: Colors.blue.withOpacity(0.05),
                   headingSectorColor: Colors.blue.withOpacity(0.8),
                   headingSectorRadius: 120,
                 ),
               ),
             ],
           ),
-
+/*
+        if (closestBusStop != null)
+          Positioned(
+            bottom: 300,
+            left: 50,
+            child: Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black26,
+                    blurRadius: 4,
+                    offset: Offset(2, 2),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Nearest Bus Stop:',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    closestBusStop?.busStop?.name ?? 'Unknown',
+                  ),
+                  Text(
+                    'Distance: ${closestBusStop?.distance.toStringAsFixed(1) ?? '--'} m',
+                  ),
+                  if(etaToNearestBusStop > 60)
+                    Text(
+                      'ETA to nearest bus stop: ${(etaToNearestBusStop/60).round()} minutes',
+                    ),
+                  if(etaToNearestBusStop < 60)
+                    Text(
+                      'ETA to nearest bus stop: ${etaToNearestBusStop.round()} seconds',
+                    ),
+                  if(etaToNearestBusStop < 0)
+                    const Text(
+                      'Calculating ETA...',
+                    ),
+                ],
+              ),
+            ),
+          ),
+*/
         //Polyline for routing, currently set as transparent but can be modified if want to view routing
         PolylineLayer(
           polylines: [
