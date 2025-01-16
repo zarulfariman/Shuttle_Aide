@@ -18,8 +18,10 @@ This repository contains all the necessary code and resources for the ShuttleAid
 1. Mobile App (Flutter)
    - Interactive map with real-time bus tracking.
    - View bus schedules categorized by routes and time.
-   - Announcements and updates section for service notifications.
+   - Announcements and updates section for latest service updates.
    - Animated and user-friendly interface.
 2. IoT GPS System (Arduino)
    - Transmits real-time latitude and longitude data to Firebase Realtime Database.
    - Configured with ESP-WROOM-32 and Neo-6M GPS module.
+
+Link to Video Implementation : https://youtu.be/elvE6iV4kX0
